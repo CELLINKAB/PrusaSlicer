@@ -3361,6 +3361,29 @@ std::string GCodeGenerator::_extrude(
     std::string gcode;
     const std::string_view description_bridge = path_attr.role.is_bridge() ? " (bridge)"sv : ""sv;
 
+    // Emit before_infill_gcode / before_perimeter_gcode / before_support_gcode hooks.
+    {
+        const std::string *hook_value = nullptr;
+        const char        *hook_name  = nullptr;
+        if (path_attr.role.is_infill() && !m_config.before_infill_gcode.value.empty()) {
+            hook_value = &m_config.before_infill_gcode.value;
+            hook_name  = "before_infill_gcode";
+        } else if (path_attr.role.is_perimeter() && !m_config.before_perimeter_gcode.value.empty()) {
+            hook_value = &m_config.before_perimeter_gcode.value;
+            hook_name  = "before_perimeter_gcode";
+        } else if (path_attr.role.is_support() && !m_config.before_support_gcode.value.empty()) {
+            hook_value = &m_config.before_support_gcode.value;
+            hook_name  = "before_support_gcode";
+        }
+        if (hook_value) {
+            DynamicConfig config;
+            config.set_key_value("layer_num",   new ConfigOptionInt(m_layer_index + 1));
+            config.set_key_value("layer_z",     new ConfigOptionFloat(m_last_layer_z));
+            config.set_key_value("max_layer_z", new ConfigOptionFloat(m_max_layer_z));
+            gcode += this->placeholder_parser_process(hook_name, *hook_value, m_writer.extruder()->id(), &config) + "\n";
+        }
+    }
+
     const bool has_active_instance{m_label_objects.has_active_instance()};
     if (m_writer.multiple_extruders && has_active_instance) {
         gcode += m_label_objects.maybe_change_instance(m_writer);

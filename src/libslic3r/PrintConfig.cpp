@@ -684,6 +684,39 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionString(""));
 
+    def = this->add("before_infill_gcode", coString);
+    def->label = L("Before infill G-code");
+    def->tooltip = L("This custom code is inserted before each infill extrusion. "
+                   "Note that you can use placeholder variables for all Slic3r settings as well "
+                   "as [layer_num] and [layer_z].");
+    def->multiline = true;
+    def->full_width = true;
+    def->height = 5;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionString(""));
+
+    def = this->add("before_perimeter_gcode", coString);
+    def->label = L("Before perimeter G-code");
+    def->tooltip = L("This custom code is inserted before each perimeter extrusion. "
+                   "Note that you can use placeholder variables for all Slic3r settings as well "
+                   "as [layer_num] and [layer_z].");
+    def->multiline = true;
+    def->full_width = true;
+    def->height = 5;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionString(""));
+
+    def = this->add("before_support_gcode", coString);
+    def->label = L("Before support G-code");
+    def->tooltip = L("This custom code is inserted before each support material extrusion. "
+                   "Note that you can use placeholder variables for all Slic3r settings as well "
+                   "as [layer_num] and [layer_z].");
+    def->multiline = true;
+    def->full_width = true;
+    def->height = 5;
+    def->mode = comExpert;
+    def->set_default_value(new ConfigOptionString(""));
+
     def = this->add("between_objects_gcode", coString);
     def->label = L("Between objects G-code");
     def->tooltip = L("This code is inserted between objects when using sequential printing. By default extruder and bed temperature are reset using non-wait command; however if M104, M109, M140 or M190 are detected in this custom code, Slic3r will not add temperature commands. Note that you can use placeholder variables for all Slic3r settings, so you can put a \"M109 S[first_layer_temperature]\" command wherever you want.");
@@ -6518,6 +6551,9 @@ static std::map<t_custom_gcode_key, t_config_option_keys> s_CustomGcodeSpecificP
     {"end_filament_gcode",      {"layer_num", "layer_z", "max_layer_z", "filament_extruder_id"}},
     {"end_gcode",               {"layer_num", "layer_z", "max_layer_z", "filament_extruder_id"}},
     {"before_layer_gcode",      {"layer_num", "layer_z", "max_layer_z"}},
+    {"before_infill_gcode",     {"layer_num", "layer_z", "max_layer_z"}},
+    {"before_perimeter_gcode",  {"layer_num", "layer_z", "max_layer_z"}},
+    {"before_support_gcode",    {"layer_num", "layer_z", "max_layer_z"}},
     {"layer_gcode",             {"layer_num", "layer_z", "max_layer_z"}},
     {"toolchange_gcode",        {"layer_num", "layer_z", "max_layer_z", "previous_extruder", "next_extruder", "toolchange_z"}},
     {"color_change_gcode",      {"color_change_extruder"}},
