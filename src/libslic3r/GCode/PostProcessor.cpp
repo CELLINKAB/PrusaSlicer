@@ -249,10 +249,18 @@ bool run_post_process_scripts(std::string &src_path, bool make_copy, const std::
     // Store print configuration into environment variables.
     config.setenv_();
     // Let the post-processing script know the target host ("File", "PrusaLink", "Repetier", "SL1Host", "OctoPrint", "FlashAir", "Duet", "AstroBox" ...)
+#ifdef _WIN32
     boost::nowide::setenv("SLIC3R_PP_HOST", host.c_str(), 1);
+#else
+    ::setenv("SLIC3R_PP_HOST", host.c_str(), 1);
+#endif
     // Let the post-processing script know the final file name. For "File" host, it is a full path of the target file name and its location, for example pointing to an SD card.
     // For "PrusaLink" or "OctoPrint", it is a file name optionally with a directory on the target host.
+#ifdef _WIN32
     boost::nowide::setenv("SLIC3R_PP_OUTPUT_NAME", output_name.c_str(), 1);
+#else
+    ::setenv("SLIC3R_PP_OUTPUT_NAME", output_name.c_str(), 1);
+#endif
 
     // Path to an optional file that the post-processing script may create and populate it with a single line containing the output_name replacement.
     std::string path_output_name = path + ".output_name";

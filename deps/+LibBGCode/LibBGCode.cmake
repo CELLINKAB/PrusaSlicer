@@ -26,6 +26,7 @@ add_cmake_project(LibBGCode
     CMAKE_ARGS
         -DLibBGCode_BUILD_TESTS:BOOL=OFF
         -DLibBGCode_BUILD_CMD_TOOL:BOOL=OFF
+        -Dheatshrink_DIR:PATH=${${PROJECT_NAME}_DEP_INSTALL_PREFIX}/lib/cmake/heatshrink
 )
 
 # set(DEP_LibBGCode_deps_DEPENDS ZLIB Boost)

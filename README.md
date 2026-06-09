@@ -58,6 +58,96 @@ these documentation pages:
 * [macOS](doc/How%20to%20build%20-%20Mac%20OS.md)
 * [Windows](doc/How%20to%20build%20-%20Windows.md)
 
+#### Building CLI-only (no GUI)
+
+PrusaSlicer can be built as a command-line-only binary without any GUI
+dependencies (wxWidgets, OpenGL, GLEW, OpenCSG, CURL, DBus1, OpenVDB).
+This produces a smaller binary suitable for headless/server environments.
+
+**Step 1: Build dependencies** (using the `cli-only` preset)
+
+```bash
+cd deps
+mkdir build
+cd build
+cmake --preset cli-only
+make -j$(nproc)
+```
+
+The `cli-only` preset excludes GUI-only packages:
+- **wxWidgets** — GUI toolkit (not needed for CLI)
+- **OpenCSG** — Constructive solid geometry (GUI-only)
+- **OCCT** — STEP file support (GUI-only)
+- **Catch2** — Unit testing framework (disabled for CLI builds)
+- **GLEW** — OpenGL extension loader (GUI-only)
+- **CURL** — Network library (GUI-only features)
+- **OpenVDB** — Voxel grid library (GUI-only)
+- **OpenEXR** — High dynamic range images (GUI-only)
+
+**Step 2: Build PrusaSlicer**
+
+```bash
+cd ..
+mkdir build
+cd build
+cmake .. \
+  -DSLIC3R_STATIC=ON \
+  -DSLIC3R_PCH=OFF \
+  -DSLIC3R_GUI=OFF \
+  -DCMAKE_PREFIX_PATH=$(pwd)/../deps/build/destdir/usr/local
+make -j$(nproc)
+```
+
+The CLI binary will be at `build/src/prusa-slicer`.
+
+**Cross-compilation:**
+When cross-compiling, the build system automatically adds the deps install
+prefix to `CMAKE_FIND_ROOT_PATH` so that `find_package` works with toolchains
+that restrict package search to the sysroot.
+
+**Notes:**
+- STEP file import is disabled in CLI builds (requires OCCT). Enable it with
+  `-DSLIC3R_ENABLE_FORMAT_STEP=ON` if you provide your own OCCT installation.
+- Unit tests are disabled in CLI builds. Enable with `-DSLIC3R_BUILD_TESTS=ON`
+  if you provide your own Catch2 installation.
+
+#### Building with Yocto
+
+PrusaSlicer can be cross-compiled for embedded targets using Yocto. The
+`yocto` CMake preset is designed for this purpose and inherits from `cli-only`,
+with additional packages (`GMP`, `MPFR`, `Boost`, `TBB`, `PNG`, `JPEG`,
+`Cereal`, `EXPAT`, `ZLIB`, `nlohmann_json`) delegated to the Yocto sysroot
+via `PrusaSlicer_deps_PLATFORM_PACKAGES`.
+
+A minimal Yocto recipe:
+
+```bitbake
+SRC_URI = "git://github.com/prusa3d/PrusaSlicer.git;protocol=https;branch=master"
+SRCREV = "${AUTOREV}"
+S = "${WORKDIR}/git"
+
+inherit cmake
+
+DEPENDS = " \
+    boost gmp libeigen libjpeg-turbo libpng libcereal expat mpfr tbb zlib nlohmann-json \
+"
+
+EXTRA_OECMAKE = " \
+    -DSLIC3R_GUI=OFF \
+    -DSLIC3R_FHS=ON \
+    -DSLIC3R_STATIC=ON \
+    -DSLIC3R_BUILD_TESTS=OFF \
+    -DSLIC3R_ENABLE_FORMAT_STEP=OFF \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DPrusaSlicer_BUILD_DEPS=ON \
+    -DPrusaSlicer_DEPS_PRESET=yocto \
+"
+```
+
+The `yocto` preset excludes GUI-only deps and uses the Yocto sysroot for
+common libraries, while building embedded-only deps (CGAL, Qhull, NLopt,
+LibBGCode, heatshrink, NanoSVG) in-tree.
+
 ### Can I help?
 
 Sure! You can do the following to find things that are available to help with:

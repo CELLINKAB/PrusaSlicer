@@ -155,8 +155,7 @@ set(SLIC3R_SOURCES
     Format/SL1_SVG.cpp
     Format/AnycubicSLA.hpp
     Format/AnycubicSLA.cpp
-    Format/STEP.hpp
-    Format/STEP.cpp
+
     Format/SVG.hpp
     Format/SVG.cpp
     Format/SLAArchiveFormatRegistry.hpp
@@ -554,6 +553,14 @@ if (APPLE)
         )
 endif ()
 
+# STEP format support (OCCT-based)
+if (SLIC3R_ENABLE_FORMAT_STEP)
+    list(APPEND SLIC3R_SOURCES
+        Format/STEP.hpp
+        Format/STEP.cpp
+    )
+endif ()
+
 add_library(libslic3r STATIC ${SLIC3R_SOURCES})
 
 if (WIN32)
@@ -660,8 +667,9 @@ target_link_libraries(libslic3r PUBLIC
     prusa_fdm_mixer
 )
 
-if (APPLE)
-    # TODO: we need to fix notarization with the separate shared library
+# OCCTWrapper is only linked on Apple (statically); on Linux/Windows it's loaded dynamically
+# Only needed if STEP format support is enabled
+if (APPLE AND SLIC3R_ENABLE_FORMAT_STEP)
     target_link_libraries(libslic3r PUBLIC OCCTWrapper)
 endif ()
 

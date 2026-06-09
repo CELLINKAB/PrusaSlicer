@@ -223,23 +223,24 @@ static bool setup_common()
 #endif
 
     // Switch boost::filesystem to utf8.
+    // On Windows, wide strings are required for Unicode paths so we install the
+    // nowide UTF-8 codecvt facet. On POSIX, paths are plain byte sequences and
+    // boost::filesystem never invokes the codecvt for std::string paths, so
+    // there is nothing to set up — and attempting to do so can fail on embedded
+    // images where named locale data (e.g. en_US.UTF-8) is not installed.
+#if defined(_WIN32)
     try {
         boost::nowide::nowide_filesystem();
     }
     catch (const std::runtime_error& ex) {
         std::string caption = std::string(SLIC3R_APP_NAME) + " Error";
-        std::string text = std::string("An error occured while setting up locale.\n") + (
-#if !defined(_WIN32) && !defined(__APPLE__)
-            // likely some linux system
-            "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-#endif
-            SLIC3R_APP_NAME " will now terminate.\n\n") + ex.what();
-#if defined(_WIN32) && defined(SLIC3R_GUI)
+        std::string text = std::string("An error occured while setting up locale.\n") +
+            SLIC3R_APP_NAME " will now terminate.\n\n" + ex.what();
         MessageBoxA(NULL, text.c_str(), caption.c_str(), MB_OK | MB_ICONERROR);
-#endif
         boost::nowide::cerr << text.c_str() << std::endl;
         return false;
     }
+#endif
 
     {
         Slic3r::set_logging_level(1);

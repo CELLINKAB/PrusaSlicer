@@ -55,6 +55,11 @@ endif ()
 
 include(${PROJECT_SOURCE_DIR}/../cmake/modules/AddCMakeProject.cmake)
 
+# Expose the install step as a real Ninja/Make target for all ExternalProjects.
+# This is required so ExternalProject_Add_StepDependencies can wire
+# configure-after-install ordering between dependent packages.
+set_property(DIRECTORY PROPERTY EP_STEP_TARGETS install)
+
 macro(list_projects result curdir)
   file(GLOB children RELATIVE ${curdir} ${curdir}/*)
   set(dirlist "")
@@ -211,6 +216,14 @@ foreach (pkg ${SUPPORTED_PACKAGES})
     endif ()
   endforeach()
 endforeach()
+
+# LibBGCode's configure step runs find_package(heatshrink), which requires
+# heatshrink to be installed (not just built). ExternalProject's main target
+# only depends on the build step, not install, so the generic add_dependencies()
+# above isn't sufficient. Use step-level dependency to wire configure-after-install.
+if(TARGET dep_LibBGCode AND TARGET dep_heatshrink)
+  ExternalProject_Add_StepDependencies(dep_LibBGCode configure dep_heatshrink-install)
+endif()
 
 list(REMOVE_DUPLICATES _build_list)
 dep_message(STATUS "Building dep targets (${CMAKE_BUILD_TYPE}): ${_build_list}")

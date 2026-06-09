@@ -61,3 +61,9 @@ endif ()
 list(APPEND CMAKE_PREFIX_PATH ${_build_dir}/destdir/usr/local)
 set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" CACHE STRING "")
 
+# When cross-compiling, also add the deps install prefix to CMAKE_FIND_ROOT_PATH
+# so that find_package works with toolchains that set CMAKE_FIND_ROOT_PATH_MODE_PACKAGE to ONLY.
+if (CMAKE_CROSSCOMPILING)
+    list(APPEND CMAKE_FIND_ROOT_PATH ${_build_dir}/destdir/usr/local)
+endif()
+

@@ -20,7 +20,9 @@
 #include "Format/OBJ.hpp"
 #include "Format/STL.hpp"
 #include "Format/3mf.hpp"
+#if SLIC3R_ENABLE_FORMAT_STEP
 #include "Format/STEP.hpp"
+#endif
 #include "Format/SVG.hpp"
 #include "Format/PrintRequest.hpp"
 
@@ -49,9 +51,11 @@ static Model read_model_from_file(const std::string& input_file, LoadAttributes 
         result = load_stl(input_file.c_str(), &model);
     else if (boost::algorithm::iends_with(input_file, ".obj"))
         result = load_obj(input_file.c_str(), &model);
+#if SLIC3R_ENABLE_FORMAT_STEP
     else if (boost::algorithm::iends_with(input_file, ".step") || boost::algorithm::iends_with(input_file, ".stp")) {
         result = load_step(input_file.c_str(), &model, step_deflections);
     }
+#endif
     else if (boost::algorithm::iends_with(input_file, ".amf") || boost::algorithm::iends_with(input_file, ".amf.xml"))
 //?        result = load_amf(input_file.c_str(), &temp_config, &temp_config_substitutions_context, &model, options & LoadAttribute::CheckVersion);
 //? LoadAttribute::CheckVersion is needed here, when we loading just a geometry
@@ -65,7 +69,11 @@ static Model read_model_from_file(const std::string& input_file, LoadAttributes 
     else if (boost::ends_with(input_file, ".printRequest"))
         result = load_printRequest(input_file.c_str(), &model);
     else
+#if SLIC3R_ENABLE_FORMAT_STEP
         throw Slic3r::RuntimeError(L("Unknown file format. Input file must have .stl, .obj, .step/.stp, .svg, .amf(.xml) or extension .3mf(.zip)."));
+#else
+        throw Slic3r::RuntimeError(L("Unknown file format. Input file must have .stl, .obj, .svg, .amf(.xml) or extension .3mf(.zip)."));
+#endif
 
     if (!result)
         throw Slic3r::RuntimeError(L("Loading of a model file failed."));

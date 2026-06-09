@@ -28,6 +28,22 @@
             }
         },
         {
+            "name": "cli-only",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build-cli-only",
+            "cacheVariables": {
+                "PrusaSlicer_deps_PACKAGE_EXCLUDES": "wxWidgets|OpenCSG|OCCT|Catch2|GLEW|CURL"
+            }
+        },
+        {
+            "name": "yocto",
+            "inherits": "cli-only",
+            "binaryDir": "${sourceDir}/build-yocto",
+            "cacheVariables": {
+                "PrusaSlicer_deps_PLATFORM_PACKAGES": "GMP;MPFR;Boost;TBB;PNG;JPEG;Cereal;EXPAT;ZLIB;json"
+            }
+        },
+        {
             "name": "mac_universal_x86",
             "inherits": "default",
             "binaryDir": "${sourceDir}/build-x86_64",

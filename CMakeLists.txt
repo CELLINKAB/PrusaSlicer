@@ -40,7 +40,7 @@ option(SLIC3R_PCH               "Use precompiled headers" 1)
 option(SLIC3R_MSVC_COMPILE_PARALLEL "Compile on Visual Studio in parallel" 1)
 option(SLIC3R_ASAN              "Enable ASan on Clang and GCC" 0)
 option(SLIC3R_UBSAN             "Enable UBSan on Clang and GCC" 0)
-option(SLIC3R_ENABLE_FORMAT_STEP "Enable compilation of STEP file support" ON)
+option(SLIC3R_ENABLE_FORMAT_STEP "Enable compilation of STEP file support (requires OCCT)" ${SLIC3R_GUI})
 option(SLIC3R_LOG_TO_FILE       "Enable logging into file")
 option(SLIC3R_REPO_URL          "Preset repo URL")
 
@@ -55,6 +55,12 @@ set(OPENVDB_FIND_MODULE_PATH "" CACHE PATH "Path to OpenVDB installation's find 
 set(SLIC3R_GTK "2" CACHE STRING "GTK version to use with wxWidgets on Linux")
 
 set(IS_CROSS_COMPILE FALSE)
+
+# CMake sets CMAKE_CROSSCOMPILING when a toolchain file targets a different
+# architecture (e.g. Yocto cross-builds for ARM on an x86_64 host).
+if (CMAKE_CROSSCOMPILING)
+    set(IS_CROSS_COMPILE TRUE)
+endif ()
 
 if (SLIC3R_STATIC)
     # Prefer config scripts over find modules. This is helpful when building with
@@ -83,7 +89,7 @@ if (APPLE)
 endif ()
 
 option(SLIC3R_BUILD_SANDBOXES   "Build development sandboxes" OFF)
-option(SLIC3R_BUILD_TESTS       "Build unit tests" ON)
+option(SLIC3R_BUILD_TESTS       "Build unit tests" ${SLIC3R_GUI})
 
 if (IS_CROSS_COMPILE)
     message("Detected cross compilation setup. Tests and encoding checks will be forcedly disabled!")
@@ -245,7 +251,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
 
-    find_package(DBus1 REQUIRED)
+    if (SLIC3R_GUI)
+        find_package(DBus1 REQUIRED)
+    endif()
 endif()
 
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUXX)
@@ -370,7 +378,10 @@ endif()
 # boost::process was introduced first in version 1.64.0,
 # boost::beast::detail::base64 was introduced first in version 1.66.0
 set(MINIMUM_BOOST_VERSION "1.83.0")
-set(_boost_components "system;filesystem;thread;log;locale;regex;chrono;atomic;date_time;iostreams;nowide")
+set(_boost_components "system;filesystem;thread;log;locale;regex;chrono;atomic;date_time;iostreams")
+if(WIN32)
+    list(APPEND _boost_components nowide)
+endif()
 find_package(Boost ${MINIMUM_BOOST_VERSION} REQUIRED COMPONENTS ${_boost_components})
 
 find_package(Eigen3 3.3.7 REQUIRED)
@@ -439,18 +450,20 @@ slic3r_remap_configs(TBB::tbbmalloc RelWithDebInfo Release)
 # The Intel TBB library will use the std::exception_ptr feature of C++11.
 # add_definitions(-DTBB_USE_CAPTURED_EXCEPTION=0)
 
-find_package(CURL REQUIRED)
+if (SLIC3R_GUI)
+    find_package(CURL REQUIRED)
 
-add_library(libcurl INTERFACE)
-target_link_libraries(libcurl INTERFACE CURL::libcurl)
+    add_library(libcurl INTERFACE)
+    target_link_libraries(libcurl INTERFACE CURL::libcurl)
 
-# Fixing curl's cmake config script bugs
-if (NOT WIN32)
-    # Required by libcurl
-    find_package(ZLIB REQUIRED)
-    target_link_libraries(libcurl INTERFACE ZLIB::ZLIB)
-else()
-    target_link_libraries(libcurl INTERFACE crypt32)
+    # Fixing curl's cmake config script bugs
+    if (NOT WIN32)
+        # Required by libcurl
+        find_package(ZLIB REQUIRED)
+        target_link_libraries(libcurl INTERFACE ZLIB::ZLIB)
+    else()
+        target_link_libraries(libcurl INTERFACE crypt32)
+    endif()
 endif()
 
 ## OPTIONAL packages
@@ -471,16 +484,17 @@ endif ()
 
 find_package(PNG REQUIRED)
 
-set(OpenGL_GL_PREFERENCE "LEGACY")
-find_package(OpenGL REQUIRED)
+# Find OpenGL and GLEW (only needed for GUI)
+if (SLIC3R_GUI)
+    set(OpenGL_GL_PREFERENCE "LEGACY")
+    find_package(OpenGL REQUIRED)
 
-# Find glew or use bundled version
-if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_GLEW)
-    set(GLEW_USE_STATIC_LIBS ON)
-    set(GLEW_VERBOSE ON)
+    if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_GLEW)
+        set(GLEW_USE_STATIC_LIBS ON)
+        set(GLEW_VERBOSE ON)
+    endif()
+    find_package(GLEW REQUIRED)
 endif()
-
-find_package(GLEW REQUIRED)
 
 # Find the Cereal serialization library
 find_package(cereal REQUIRED)
@@ -572,7 +586,7 @@ find_package(OpenVDB 5.0 COMPONENTS openvdb)
 if(OpenVDB_FOUND)
     slic3r_remap_configs(IlmBase::Half RelWithDebInfo Release)
     slic3r_remap_configs(Blosc::blosc RelWithDebInfo Release)
-else ()
+else()
     message(FATAL_ERROR "OpenVDB could not be found with the bundled find module. "
                    "You can try to specify the find module location of your "
                    "OpenVDB installation with the OPENVDB_FIND_MODULE_PATH cache variable.")

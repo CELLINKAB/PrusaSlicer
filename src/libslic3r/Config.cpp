@@ -642,7 +642,11 @@ void ConfigBase::setenv_() const
         for (size_t i = 0; i < envname.size(); ++i)
             envname[i] = (envname[i] <= 'z' && envname[i] >= 'a') ? envname[i]-('a'-'A') : envname[i];
         
+#ifdef _WIN32
         boost::nowide::setenv(envname.c_str(), this->opt_serialize(*it).c_str(), 1);
+#else
+        ::setenv(envname.c_str(), this->opt_serialize(*it).c_str(), 1);
+#endif
     }
 }
 

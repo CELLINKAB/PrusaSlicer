@@ -21,7 +21,7 @@ add_cmake_project(OpenVDB
     CMAKE_ARGS
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON 
         -DOPENVDB_BUILD_PYTHON_MODULE=OFF
-        -DUSE_BLOSC=ON
+        -DUSE_BLOSC=OFF
         -DOPENVDB_CORE_SHARED=${_build_shared} 
         -DOPENVDB_CORE_STATIC=${_build_static}
         -DOPENVDB_ENABLE_RPATH:BOOL=OFF
@@ -30,4 +30,4 @@ add_cmake_project(OpenVDB
         -DDISABLE_DEPENDENCY_VERSION_CHECKS=ON # Centos6 has old zlib
 )
 
-set(DEP_OpenVDB_DEPENDS TBB Blosc OpenEXR Boost)
+set(DEP_OpenVDB_DEPENDS TBB OpenEXR Boost)
