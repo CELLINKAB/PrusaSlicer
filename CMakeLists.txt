@@ -574,13 +574,9 @@ if(OpenVDB_FOUND)
     slic3r_remap_configs(IlmBase::Half RelWithDebInfo Release)
     slic3r_remap_configs(Blosc::blosc RelWithDebInfo Release)
 else ()
-    if (SLIC3R_GUI)
-        message(FATAL_ERROR "OpenVDB could not be found with the bundled find module. "
-                       "You can try to specify the find module location of your "
-                       "OpenVDB installation with the OPENVDB_FIND_MODULE_PATH cache variable.")
-    else ()
-        message(WARNING "OpenVDB not found. OpenVDB mesh processing will be disabled.")
-    endif ()
+    message(FATAL_ERROR "OpenVDB could not be found with the bundled find module. "
+                   "You can try to specify the find module location of your "
+                   "OpenVDB installation with the OPENVDB_FIND_MODULE_PATH cache variable.")
 endif ()
 
 set(TOP_LEVEL_PROJECT_DIR ${PROJECT_SOURCE_DIR})

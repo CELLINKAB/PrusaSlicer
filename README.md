@@ -58,6 +58,50 @@ these documentation pages:
 * [macOS](doc/How%20to%20build%20-%20Mac%20OS.md)
 * [Windows](doc/How%20to%20build%20-%20Windows.md)
 
+#### Building CLI-only (no GUI)
+
+PrusaSlicer can be built as a command-line-only binary without any GUI
+dependencies (wxWidgets, OpenGL, GLEW, OpenCSG). This produces a smaller
+binary suitable for headless/server environments.
+
+**Step 1: Build dependencies** (excluding GUI-only packages)
+
+```bash
+cd deps
+mkdir build
+cd build
+cmake .. -DPrusaSlicer_deps_PACKAGE_EXCLUDES="GLEW|wxWidgets|OCCT|Catch2"
+make -j$(nproc)
+```
+
+This excludes:
+- **GLEW** — OpenGL extension loader (GUI-only)
+- **wxWidgets** — GUI toolkit (not needed for CLI)
+- **OCCT** — STEP file support (disabled for CLI builds)
+- **Catch2** — Unit testing framework (disabled for CLI builds)
+
+**Step 2: Build PrusaSlicer**
+
+```bash
+cd ..
+mkdir build
+cd build
+cmake .. \
+  -DSLIC3R_STATIC=1 \
+  -DSLIC3R_PCH=OFF \
+  -DSLIC3R_GUI=no \
+  -DCMAKE_PREFIX_PATH=$(pwd)/../deps/build/destdir/usr/local
+make -j$(nproc)
+```
+
+The CLI binary will be at `build/src/prusa-slicer`.
+
+**Notes:**
+- STEP file import is disabled in CLI builds (requires OCCT). Enable it with
+  `-DSLIC3R_ENABLE_FORMAT_STEP=ON` if you provide your own OCCT installation.
+- Unit tests are disabled in CLI builds. Enable with `-DSLIC3R_BUILD_TESTS=ON`
+  if you provide your own Catch2 installation.
+
 ### Can I help?
 
 Sure! You can do the following to find things that are available to help with:
